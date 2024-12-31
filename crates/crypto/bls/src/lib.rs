@@ -12,6 +12,7 @@ use crate::error::BlsError;
 use ark_bn254::{g1::G1Affine, Fq, Fr, G1Projective, G2Affine, G2Projective};
 use ark_ec::{AffineRepr, CurveGroup};
 use ark_ff::{fields::PrimeField, BigInt, BigInteger256, Fp2};
+use ark_ff::BigInteger;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use eigen_crypto_bn254::utils::map_to_curve;
 use eigen_utils::blsapkregistry::BN254::{G1Point as G1PointRegistry, G2Point as G2PointRegistry};
@@ -156,12 +157,38 @@ pub struct BlsKeyPair {
 impl BlsKeyPair {
     /// Input [`Fr`] as a [`String`]
     pub fn new(fr: String) -> Result<Self, BlsError> {
+        // standard config: 
         let sk = Fr::from_str(&fr).map_err(|_| BlsError::InvalidBlsPrivateKey)?;
+        println!("sk: {:?}", sk);
         let pk = G1Projective::from(G1Affine::generator()) * sk;
-        Ok(Self {
+        println!("pk: {:?}", pk);
+        let bls_key_pair = Self {
             priv_key: sk,
             pub_key: BlsG1Point::new(pk.into_affine()),
-        })
+        };
+        println!("bls_key_pair g1: {:?}", bls_key_pair.public_key().g1());
+        println!("bls_key_pair g2: {:?}", bls_key_pair.public_key_g2().g2());
+
+        //reverse the bytes
+        let sk_int: BigInteger256 = sk.into();
+        println!("sk_int: {:?}", sk_int);
+        let mut bytes = sk_int.to_bytes_le();
+        bytes.reverse();
+        println!("sk_int bytes: {:?}", bytes);
+        
+        // Recreate sk from big-endian bytes
+        let sk_rev = Fr::from_le_bytes_mod_order(&bytes);
+        println!("sk reversed: {:?}", sk_rev);
+        let pk_rev = G1Projective::from(G1Affine::generator()) * sk_rev;
+        println!("pk reversed: {:?}", pk_rev);
+        let bls_key_pair_rev = Self {
+            priv_key: sk_rev,
+            pub_key: BlsG1Point::new(pk_rev.into_affine()),
+        };
+        println!("bls_key_pair_rev g1: {:?}", bls_key_pair_rev.public_key().g1());
+        println!("bls_key_pair_rev g2: {:?}", bls_key_pair_rev.public_key_g2().g2());
+
+        Ok(bls_key_pair)
     }
 
     /// Get public key on G1
@@ -572,10 +599,8 @@ mod tests {
         let message: [u8; 32] = [109, 10, 193, 43, 158, 194, 28, 189, 226, 112, 85, 235, 254, 189, 103, 141, 163, 99, 194, 82, 166, 192, 253, 181, 113, 219, 157, 83, 218, 31, 20, 135];
         println!("message: {:?}", message);
         let bls_priv_key =
-            "745777605297132817512146785682870612362858685853905492946733626056";
+            "273324908962765760120003567007510035439898136151274244218189129784";
         let bls_key_pair = BlsKeyPair::new(bls_priv_key.to_string()).unwrap();
-        println!("bls_key_pair g1: {:?}", bls_key_pair.public_key().g1());
-        println!("bls_key_pair g2: {:?}", bls_key_pair.public_key_g2().g2());
 
         let signature = bls_key_pair.sign_message(&message);
         println!("signature: {:?}", signature);
