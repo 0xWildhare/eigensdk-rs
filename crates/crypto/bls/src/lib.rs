@@ -568,15 +568,17 @@ mod tests {
 
     #[test]
     fn test_verify_message() {
-        let message: [u8; 32] = [
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-            25, 26, 27, 28, 29, 30, 31, 32,
-        ];
+        println!("test verify message......");
+        let message: [u8; 32] = [109, 10, 193, 43, 158, 194, 28, 189, 226, 112, 85, 235, 254, 189, 103, 141, 163, 99, 194, 82, 166, 192, 253, 181, 113, 219, 157, 83, 218, 31, 20, 135];
+        println!("message: {:?}", message);
         let bls_priv_key =
-            "12248929636257230549931416853095037629726205319386239410403476017439825112537";
+            "745777605297132817512146785682870612362858685853905492946733626056";
         let bls_key_pair = BlsKeyPair::new(bls_priv_key.to_string()).unwrap();
+        println!("bls_key_pair g1: {:?}", bls_key_pair.public_key().g1());
+        println!("bls_key_pair g2: {:?}", bls_key_pair.public_key_g2().g2());
 
         let signature = bls_key_pair.sign_message(&message);
+        println!("signature: {:?}", signature);
 
         assert!(verify_message(
             bls_key_pair.public_key_g2().g2(),

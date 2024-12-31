@@ -201,6 +201,12 @@ pub mod integration_test {
         let time_to_expiry = Duration::from_secs(10);
 
         // Initialize the task
+        println!("Initializing task...");
+        println!("Task index: {:?}", task_index);
+        println!("Current block number: {:?}", current_block_num);
+        println!("Quorum nums: {:?}", quorum_nums);
+        println!("Quorum threshold percentages: {:?}", quorum_threshold_percentages);
+        println!("Time to expiry: {:?}", time_to_expiry);
         bls_agg_service
             .initialize_new_task(
                 task_index,
@@ -216,6 +222,13 @@ pub mod integration_test {
         let task_response = 123;
         let task_response_digest = hash(task_response);
         let bls_signature = bls_key_pair.sign_message(task_response_digest.as_ref());
+
+
+        println!("Processing signature...");
+        println!("Task index: {:?}", task_index);
+        println!("Commitment hash: {:?}", task_response_digest);
+        println!("Signature: {:?}", bls_signature);
+        println!("Operator ID: {:?}", operator_id);
         bls_agg_service
             .process_new_signature(task_index, task_response_digest, bls_signature, operator_id)
             .await
